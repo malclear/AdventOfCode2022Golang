@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/alexchao26/advent-of-code-go/util"
@@ -30,57 +28,99 @@ func main() {
 func part1(input string) int {
 	parsed := parseInput(input)
 
-	var num int
+	score := 0
 
-	maxCalories := 0
-	elfCalories := 0
-
+	var theirs, mine string
 	for _, str := range parsed {
-		if str == "" { // trim this string var?
-			if elfCalories > maxCalories {
-				maxCalories = elfCalories
-			}
-			// this is a new Elf
-			elfCalories = 0
-			continue
-		} else {
-			num, _ = strconv.Atoi(str)
-			elfCalories = elfCalories + num
-		}
+		theirs = strings.Split(str, " ")[0]
+		mine = strings.Split(str, " ")[1]
+
+		result := roundResult(theirs, mine)
+		score = score + getRoundScore(mine, result)
 	}
 
-	return maxCalories
+	return score
+
 }
 
 func part2(input string) int {
 	parsed := parseInput(input)
 
-	var elfCalorieList []int
+	score := 0
 
-	var num int
-
-	maxCalories := 0
-	elfCalories := 0
-
+	var theirs string
 	for _, str := range parsed {
-		if str == "" { // trim this string var?
-			if elfCalories > maxCalories {
-				maxCalories = elfCalories
-			}
-			elfCalorieList = append(elfCalorieList, elfCalories)
-			// this is a new Elf
-			elfCalories = 0
-			continue
-		} else {
-			num, _ = strconv.Atoi(str)
-			elfCalories = elfCalories + num
+		theirs = strings.Split(str, " ")[0]
+
+		// the following converts either X, Y, or Z into -1, 0, 1 as a result.
+		result := int(([]rune(strings.Split(str, " ")[1]))[0]) - 89
+
+		mine := getProperThrow(theirs, result)
+		score = score + getRoundScore(mine, result)
+	}
+
+	return score
+}
+
+func getProperThrow(theirs string, result int) string {
+	myPotentialThrows := []string{"X", "Y", "Z"}
+
+	idx := (int(([]rune(theirs))[0]) - 65 + result + 3) % 3
+	return myPotentialThrows[idx]
+
+}
+
+func roundResult(theirs string, mine string) int {
+	if theirs == "A" { // ROCK
+		if mine == "X" {
+			return 0
+		}
+		if mine == "Y" {
+			return 1
+		}
+		if mine == "Z" {
+			return -1
 		}
 	}
 
-	sort.Ints(elfCalorieList)
-	listLen := len(elfCalorieList)
-	return elfCalorieList[listLen-1] + elfCalorieList[listLen-2] + elfCalorieList[listLen-3]
+	if theirs == "B" { // PAPER
+		if mine == "X" {
+			return -1
+		}
+		if mine == "Y" {
+			return 0
+		}
+		if mine == "Z" {
+			return 1
+		}
 
+	}
+	if theirs == "C" { // Scissors
+		if mine == "X" {
+			return 1
+		}
+		if mine == "Y" {
+			return -1
+		}
+		if mine == "Z" {
+			return 0
+		}
+	}
+	return 0
+}
+
+func getRoundScore(throw string, result int) int {
+	if throw == "X" || throw == "A" {
+		return 1 + 3*(result+1)
+	}
+	if throw == "Y" || throw == "B" {
+		return 2 + 3*(result+1)
+	}
+	if throw == "Z" || throw == "C" {
+		return 3 + 3*(result+1)
+	}
+
+	return 0
 }
 
 func parseInput(input string) (ans []string) {
