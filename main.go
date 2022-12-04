@@ -10,16 +10,16 @@ import (
 
 func main() {
 	var part int
-	flag.IntVar(&part, "part", 2, "part 1 or 2")
+	flag.IntVar(&part, "part", 1, "part 1 or 2")
 	flag.Parse()
 	fmt.Println("Running part", part)
 
 	if part == 1 {
-		ans := part1(util.ReadFile("./input.txt"))
+		ans := part1(util.ReadFile("./inputSample.txt"))
 		util.CopyToClipboard(fmt.Sprintf("%v", ans))
 		fmt.Println("Output:", ans)
 	} else {
-		ans := part2(util.ReadFile("./input.txt"))
+		ans := part2(util.ReadFile("./inputSample.txt"))
 		util.CopyToClipboard(fmt.Sprintf("%v", ans))
 		fmt.Println("Output:", ans)
 	}
@@ -28,99 +28,72 @@ func main() {
 func part1(input string) int {
 	parsed := parseInput(input)
 
-	score := 0
-
-	var theirs, mine string
+	totalPriorities := 0
 	for _, str := range parsed {
-		theirs = strings.Split(str, " ")[0]
-		mine = strings.Split(str, " ")[1]
-
-		result := roundResult(theirs, mine)
-		score = score + getRoundScore(mine, result)
+		first, second := getDividedRucksack(str)
+		commonItem := getCommonItem(first, second)
+		totalPriorities += getItemPriority(commonItem)
 	}
 
-	return score
-
+	return totalPriorities
 }
 
 func part2(input string) int {
 	parsed := parseInput(input)
 
-	score := 0
+	totalPriorities := 0
+	groupPriority := 0
 
-	var theirs string
-	for _, str := range parsed {
-		theirs = strings.Split(str, " ")[0]
-
-		// the following converts either X, Y, or Z into -1, 0, 1 as a result.
-		result := int(([]rune(strings.Split(str, " ")[1]))[0]) - 89
-
-		mine := getProperThrow(theirs, result)
-		score = score + getRoundScore(mine, result)
+	for i := 0; i < len(parsed); i++ {
+		if i%3 == 2 {
+			groupPriority = getGroupPriority(parsed[i-2], parsed[i-1], parsed[i])
+			totalPriorities += groupPriority
+			groupPriority = 0
+		}
 	}
 
-	return score
+	return totalPriorities
 }
 
-func getProperThrow(theirs string, result int) string {
-	myPotentialThrows := []string{"X", "Y", "Z"}
-
-	idx := (int(([]rune(theirs))[0]) - 65 + result + 3) % 3
-	return myPotentialThrows[idx]
-
+func getGroupPriority(elf_1 string, elf_2 string, elf_3 string) int {
+	common := findCommon(elf_1, elf_2)
+	common = findCommon(common, elf_3)
+	return getItemPriority(common)
 }
 
-func roundResult(theirs string, mine string) int {
-	if theirs == "A" { // ROCK
-		if mine == "X" {
-			return 0
-		}
-		if mine == "Y" {
-			return 1
-		}
-		if mine == "Z" {
-			return -1
+func findCommon(list_1 string, list_2 string) string {
+	var common string
+	for _, c := range list_2 {
+		if strings.Contains(list_1, string(c)) {
+			common = common + string(c)
 		}
 	}
-
-	if theirs == "B" { // PAPER
-		if mine == "X" {
-			return -1
-		}
-		if mine == "Y" {
-			return 0
-		}
-		if mine == "Z" {
-			return 1
-		}
-
-	}
-	if theirs == "C" { // Scissors
-		if mine == "X" {
-			return 1
-		}
-		if mine == "Y" {
-			return -1
-		}
-		if mine == "Z" {
-			return 0
-		}
-	}
-	return 0
+	return common
 }
 
-func getRoundScore(throw string, result int) int {
-	if throw == "X" || throw == "A" {
-		return 1 + 3*(result+1)
+func getItemPriority(item string) int {
+	asciiVal := int(item[0])
+	if asciiVal >= 65 && asciiVal <= 90 {
+		return asciiVal - 38 // returns the prescribed values for UPPERCASE letters
 	}
-	if throw == "Y" || throw == "B" {
-		return 2 + 3*(result+1)
-	}
-	if throw == "Z" || throw == "C" {
-		return 3 + 3*(result+1)
-	}
+	return asciiVal - 96 // returns the prescribed values for lowercase letters
+}
 
-	return 0
+func getCommonItem(first string, second string) string {
+	var commonItem string
+	for _, c := range first {
+		if len(strings.Split(second, string(c))) > 1 {
+			commonItem = string(c)
+			break
+		}
+	}
+	return commonItem
+}
+
+func getDividedRucksack(str string) (first string, second string) {
+	first = str[0 : len(str)/2]
+	second = str[len(str)/2 : len(str)]
+	return first, second
 }
 
 func parseInput(input string) (ans []string) {
