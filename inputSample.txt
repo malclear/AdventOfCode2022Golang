@@ -1,0 +1,26 @@
+zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw
+ 26
+mjqjpqmgbljsphdztnvjfqwrcgsmlb
+ 19
+bvwbjplbgvbhsrlpgdmjqwftvncz
+ 23
+nppdvjthqldpwncqszvftbrmjlhg
+ 23
+nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg
+ 29
+
+
+// part one below
+nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg
+10
+zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw
+11
+mjqjpqmgbljsphdztnvjfqwrcgsmlb
+7
+bvwbjplbgvbhsrlpgdmjqwftvncz
+5
+nppdvjthqldpwncqszvftbrmjlhg
+6
+
+
+

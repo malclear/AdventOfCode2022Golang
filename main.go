@@ -3,10 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/alexchao26/advent-of-code-go/util"
 )
+
+func parseInput(input string) (ans []string) {
+	for _, l := range strings.Split(input, "\n") {
+		ans = append(ans, l)
+	}
+	return ans
+}
 
 func main() {
 	var part int
@@ -27,105 +35,150 @@ func main() {
 
 func part1(input string) int {
 	parsed := parseInput(input)
+	line := parsed[0]
+	fmt.Println("Input data: ")
+	fmt.Println(line)
 
-	score := 0
+	fmt.Println("Processing -->")
 
-	var theirs, mine string
-	for _, str := range parsed {
-		theirs = strings.Split(str, " ")[0]
-		mine = strings.Split(str, " ")[1]
+	index := 0
+	var state []int32
 
-		result := roundResult(theirs, mine)
-		score = score + getRoundScore(mine, result)
+	for i, letter := range line {
+		markerReceived, err := markerIsReceived(letter, 4, &state)
+		if err != "" {
+			fmt.Println("!!!!! ERROR !!!!")
+			fmt.Println(err)
+			break
+		}
+		index = i
+		if markerReceived {
+			break
+		}
 	}
-
-	return score
-
+	fmt.Println("The marker was found!")
+	for _, l := range state {
+		fmt.Print(string(l))
+	}
+	fmt.Println("")
+	return index + 1
 }
 
 func part2(input string) int {
 	parsed := parseInput(input)
+	line := parsed[0]
+	fmt.Println("Input data: ")
+	fmt.Println(line)
 
-	score := 0
+	fmt.Println("Processing -->")
 
-	var theirs string
-	for _, str := range parsed {
-		theirs = strings.Split(str, " ")[0]
+	index := 0
+	var state []int32
 
-		// the following converts either X, Y, or Z into -1, 0, 1 as a result.
-		result := int(([]rune(strings.Split(str, " ")[1]))[0]) - 89
-
-		mine := getProperThrow(theirs, result)
-		score = score + getRoundScore(mine, result)
+	for i, letter := range line {
+		markerReceived, err := markerIsReceived(letter, 14, &state)
+		if err != "" {
+			fmt.Println("!!!!! ERROR !!!!")
+			fmt.Println(err)
+			break
+		}
+		index = i
+		if markerReceived {
+			break
+		}
 	}
-
-	return score
+	fmt.Println("The marker was found!")
+	for _, l := range state {
+		fmt.Print(string(l))
+	}
+	fmt.Println("")
+	return index + 1
 }
 
-func getProperThrow(theirs string, result int) string {
-	myPotentialThrows := []string{"X", "Y", "Z"}
+func markerIsReceived(letter int32, size int, state *[]int32) (bool, string) {
+	if letter == 0 {
+		return false, "A zero value was supplied when checking for a marker."
+	}
 
-	idx := (int(([]rune(theirs))[0]) - 65 + result + 3) % 3
-	return myPotentialThrows[idx]
+	if len(*state) == 0 {
+		*state = append(*state, letter)
+		return false, ""
+	}
 
+	for i := 0; i < len(*state); i++ {
+		if (*state)[i] == letter {
+			// remove i letters from front
+			*state = (*state)[i+1:]
+			// and place letter at back
+			*state = append(*state, letter)
+			return false, ""
+		}
+	}
+	*state = append(*state, letter)
+	if len(*state) < size {
+		return false, ""
+	}
+
+	return true, ""
 }
 
-func roundResult(theirs string, mine string) int {
-	if theirs == "A" { // ROCK
-		if mine == "X" {
-			return 0
-		}
-		if mine == "Y" {
-			return 1
-		}
-		if mine == "Z" {
-			return -1
-		}
-	}
-
-	if theirs == "B" { // PAPER
-		if mine == "X" {
-			return -1
-		}
-		if mine == "Y" {
-			return 0
-		}
-		if mine == "Z" {
-			return 1
-		}
-
-	}
-	if theirs == "C" { // Scissors
-		if mine == "X" {
-			return 1
-		}
-		if mine == "Y" {
-			return -1
-		}
-		if mine == "Z" {
-			return 0
-		}
-	}
-	return 0
+func getMoveData(line string) (int, int, int) {
+	line = strings.ReplaceAll(line, "move ", "")
+	line = strings.ReplaceAll(line, "from ", "")
+	line = strings.ReplaceAll(line, "to ", "")
+	line = strings.Trim(line, " ")
+	values := strings.Split(line, " ")
+	count, _ := strconv.Atoi(values[0])
+	fromStack, _ := strconv.Atoi(values[1])
+	toStack, _ := strconv.Atoi(values[2])
+	return count, fromStack, toStack
 }
 
-func getRoundScore(throw string, result int) int {
-	if throw == "X" || throw == "A" {
-		return 1 + 3*(result+1)
+func getArrayOfStacks(parsed []string) ([]Stack, int) {
+	stacks := []Stack{
+		Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{},
 	}
-	if throw == "Y" || throw == "B" {
-		return 2 + 3*(result+1)
+	index := 0
+	for ln, containerLine := range parsed {
+		index = ln
+		if !strings.Contains(containerLine, "[") {
+			break
+		}
+		containerStackList := getContainerStacks(containerLine)
+		for _, crateStack := range containerStackList {
+			stacks[crateStack.stack].Push(crateStack.crate)
+		}
 	}
-	if throw == "Z" || throw == "C" {
-		return 3 + 3*(result+1)
+	stackCount := 0
+	for i, stack := range stacks {
+		stackCount = i
+		stack.Reverse()
+		if len(stack) == 0 {
+			break
+		}
+		stacks[i] = stack
 	}
+	stacks = stacks[:stackCount] //ugly hack
 
-	return 0
+	return stacks, index + 1
 }
 
-func parseInput(input string) (ans []string) {
-	for _, l := range strings.Split(input, "\n") {
-		ans = append(ans, l)
+func getContainerStacks(line string) []CrateAddress {
+
+	crateAddressList := []CrateAddress{}
+	splitLine := strings.Split(line, "[")
+	length := 0
+	for i, seg := range splitLine {
+		if strings.Trim(seg, " ") == "" {
+			length = len(seg)
+			continue
+		}
+
+		crate := seg[0]
+		stack := (length + i) / 4
+		crateAddressList = append(crateAddressList, CrateAddress{crate: string(crate), stack: stack})
+		length += len(seg)
 	}
-	return ans
+
+	return crateAddressList
 }
