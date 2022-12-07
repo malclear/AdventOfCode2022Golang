@@ -1,26 +1,23 @@
-zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw
- 26
-mjqjpqmgbljsphdztnvjfqwrcgsmlb
- 19
-bvwbjplbgvbhsrlpgdmjqwftvncz
- 23
-nppdvjthqldpwncqszvftbrmjlhg
- 23
-nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg
- 29
-
-
-// part one below
-nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg
-10
-zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw
-11
-mjqjpqmgbljsphdztnvjfqwrcgsmlb
-7
-bvwbjplbgvbhsrlpgdmjqwftvncz
-5
-nppdvjthqldpwncqszvftbrmjlhg
-6
-
-
-
+$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k

@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strconv"
+	"github.com/alexchao26/advent-of-code-go/cast"
 	"strings"
 
 	"github.com/alexchao26/advent-of-code-go/util"
@@ -35,150 +35,131 @@ func main() {
 
 func part1(input string) int {
 	parsed := parseInput(input)
-	line := parsed[0]
-	fmt.Println("Input data: ")
-	fmt.Println(line)
+	//inFileAddMode := false
 
-	fmt.Println("Processing -->")
+	dirList := make(map[string]*Directory)
+	pwd := NewDirectoryByName("/", nil)
+	dirList[pwd.Path] = pwd
 
-	index := 0
-	var state []int32
+	for _, line := range parsed {
+		if strings.HasPrefix(line, "$ cd ..") {
+			pathArray := strings.Split(pwd.Path, "/")
+			pathArray = pathArray[1:]                     // removes first, empty string
+			pathArray = pathArray[:len(pathArray)-1]      // removes the topmost directory
+			newPath := "/" + strings.Join(pathArray, "/") // rejoins everything with a leading slash
+			pwd = getDirectory(newPath, dirList)
+		} else if strings.HasPrefix(line, "$ cd ") {
+			// This handles only relative paths
+			newDir := strings.Replace(line, "$ cd ", "", -1)
+			newDir = strings.Replace(newDir, "$ cd ", "/", -1)
+			if newDir == "/" {
+				pwd = dirList["/"]
+				continue
+			}
+			path := pwd.Path
+			if path == "/" {
+				path = ""
+			}
+			pwd = dirList[path+"/"+newDir]
 
-	for i, letter := range line {
-		markerReceived, err := markerIsReceived(letter, 4, &state)
-		if err != "" {
-			fmt.Println("!!!!! ERROR !!!!")
-			fmt.Println(err)
-			break
-		}
-		index = i
-		if markerReceived {
-			break
+		} else if strings.HasPrefix(line, "$ ls") {
+			// Nothing to do here!!
+			//inFileAddMode = true
+		} else if strings.HasPrefix(line, "dir ") {
+			dirName := strings.Replace(line, "dir ", "", -1)
+			newDir := NewDirectoryByName(dirName, pwd)
+			pwd.ChildDirectories = append(pwd.ChildDirectories, newDir)
+			dirList[newDir.Path] = newDir
+		} else {
+			fileListing := strings.Split(line, " ")
+			addNewFile(fileListing[1], cast.ToInt(fileListing[0]), pwd)
 		}
 	}
-	fmt.Println("The marker was found!")
-	for _, l := range state {
-		fmt.Print(string(l))
+
+	smallDirTotalSizes := 0
+	for _, directory := range dirList {
+
+		dirSize := directory.GetTotalSize()
+		if dirSize <= 100000 {
+			smallDirTotalSizes += dirSize
+		}
 	}
-	fmt.Println("")
-	return index + 1
+
+	return smallDirTotalSizes
 }
+
+func getDirectory(pathToDirectory string, dirList map[string]*Directory) *Directory {
+	return dirList[pathToDirectory]
+}
+
+func addNewFile(name string, size int, pwd *Directory) {
+	var newFile File
+	newFile.Init(name, size)
+	pwd.Files = append(pwd.Files, &newFile)
+
+}
+
+//func changeDirectory(path string, pwd *string) string {
+//	*pwd = *pwd + path
+//	return *pwd + path
+//}
 
 func part2(input string) int {
 	parsed := parseInput(input)
-	line := parsed[0]
-	fmt.Println("Input data: ")
-	fmt.Println(line)
+	//inFileAddMode := false
 
-	fmt.Println("Processing -->")
+	dirList := make(map[string]*Directory)
+	pwd := NewDirectoryByName("/", nil)
+	dirList[pwd.Path] = pwd
 
-	index := 0
-	var state []int32
+	for _, line := range parsed {
+		if strings.HasPrefix(line, "$ cd ..") {
+			pathArray := strings.Split(pwd.Path, "/")
+			pathArray = pathArray[1:]                     // removes first, empty string
+			pathArray = pathArray[:len(pathArray)-1]      // removes the topmost directory
+			newPath := "/" + strings.Join(pathArray, "/") // rejoins everything with a leading slash
+			pwd = getDirectory(newPath, dirList)
+		} else if strings.HasPrefix(line, "$ cd ") {
+			// This handles only relative paths
+			newDir := strings.Replace(line, "$ cd ", "", -1)
+			newDir = strings.Replace(newDir, "$ cd ", "/", -1)
+			if newDir == "/" {
+				pwd = dirList["/"]
+				continue
+			}
+			path := pwd.Path
+			if path == "/" {
+				path = ""
+			}
+			pwd = dirList[path+"/"+newDir]
 
-	for i, letter := range line {
-		markerReceived, err := markerIsReceived(letter, 14, &state)
-		if err != "" {
-			fmt.Println("!!!!! ERROR !!!!")
-			fmt.Println(err)
-			break
-		}
-		index = i
-		if markerReceived {
-			break
-		}
-	}
-	fmt.Println("The marker was found!")
-	for _, l := range state {
-		fmt.Print(string(l))
-	}
-	fmt.Println("")
-	return index + 1
-}
-
-func markerIsReceived(letter int32, size int, state *[]int32) (bool, string) {
-	if letter == 0 {
-		return false, "A zero value was supplied when checking for a marker."
-	}
-
-	if len(*state) == 0 {
-		*state = append(*state, letter)
-		return false, ""
-	}
-
-	for i := 0; i < len(*state); i++ {
-		if (*state)[i] == letter {
-			// remove i letters from front
-			*state = (*state)[i+1:]
-			// and place letter at back
-			*state = append(*state, letter)
-			return false, ""
+		} else if strings.HasPrefix(line, "$ ls") {
+			// Nothing to do here!!
+			//inFileAddMode = true
+		} else if strings.HasPrefix(line, "dir ") {
+			dirName := strings.Replace(line, "dir ", "", -1)
+			newDir := NewDirectoryByName(dirName, pwd)
+			pwd.ChildDirectories = append(pwd.ChildDirectories, newDir)
+			dirList[newDir.Path] = newDir
+		} else {
+			fileListing := strings.Split(line, " ")
+			addNewFile(fileListing[1], cast.ToInt(fileListing[0]), pwd)
 		}
 	}
-	*state = append(*state, letter)
-	if len(*state) < size {
-		return false, ""
-	}
 
-	return true, ""
-}
+	spaceRequired := 30000000
+	diskSize := 70000000
+	spaceUsed := dirList["/"].GetTotalSize()
+	amountToFree := spaceRequired - (diskSize - spaceUsed)
 
-func getMoveData(line string) (int, int, int) {
-	line = strings.ReplaceAll(line, "move ", "")
-	line = strings.ReplaceAll(line, "from ", "")
-	line = strings.ReplaceAll(line, "to ", "")
-	line = strings.Trim(line, " ")
-	values := strings.Split(line, " ")
-	count, _ := strconv.Atoi(values[0])
-	fromStack, _ := strconv.Atoi(values[1])
-	toStack, _ := strconv.Atoi(values[2])
-	return count, fromStack, toStack
-}
-
-func getArrayOfStacks(parsed []string) ([]Stack, int) {
-	stacks := []Stack{
-		Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{}, Stack{},
-	}
-	index := 0
-	for ln, containerLine := range parsed {
-		index = ln
-		if !strings.Contains(containerLine, "[") {
-			break
-		}
-		containerStackList := getContainerStacks(containerLine)
-		for _, crateStack := range containerStackList {
-			stacks[crateStack.stack].Push(crateStack.crate)
+	//pathToSmallest := "/"
+	smallestSize := spaceUsed
+	for _, directory := range dirList {
+		dirSize := directory.GetTotalSize()
+		if dirSize < smallestSize && dirSize > amountToFree {
+			smallestSize = dirSize
+			//pathToSmallest = directory.Path
 		}
 	}
-	stackCount := 0
-	for i, stack := range stacks {
-		stackCount = i
-		stack.Reverse()
-		if len(stack) == 0 {
-			break
-		}
-		stacks[i] = stack
-	}
-	stacks = stacks[:stackCount] //ugly hack
-
-	return stacks, index + 1
-}
-
-func getContainerStacks(line string) []CrateAddress {
-
-	crateAddressList := []CrateAddress{}
-	splitLine := strings.Split(line, "[")
-	length := 0
-	for i, seg := range splitLine {
-		if strings.Trim(seg, " ") == "" {
-			length = len(seg)
-			continue
-		}
-
-		crate := seg[0]
-		stack := (length + i) / 4
-		crateAddressList = append(crateAddressList, CrateAddress{crate: string(crate), stack: stack})
-		length += len(seg)
-	}
-
-	return crateAddressList
+	return smallestSize
 }
