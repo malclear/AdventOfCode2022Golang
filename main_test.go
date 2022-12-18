@@ -1,6 +1,7 @@
 package main
 
 import (
+	"AdventOfCode2022GoLang/utils"
 	"github.com/alexchao26/advent-of-code-go/util"
 	"testing"
 )
@@ -14,41 +15,41 @@ import (
 //   }
 
 func Test_Bits(t *testing.T) {
-	var b Bit
-	b.Set(UP)
-	b.Toggle(DOWN)
+	var b utils.Bit
+	b.Set(utils.UP)
+	b.Toggle(utils.DOWN)
 
-	got := b.Has(UP)
+	got := b.Has(utils.UP)
 	if !got {
 		t.Errorf("Setting UP = false, wanted true")
 	}
 
-	got = b.Has(DOWN)
+	got = b.Has(utils.DOWN)
 	if !got {
 		t.Errorf("Toggling DOWN = false, wanted true")
 	}
 
-	got = b.Has(LEFT)
+	got = b.Has(utils.LEFT)
 	if got {
 		t.Errorf("initial LEFT = true, wanted false")
 	}
 }
 
 func Test_Bits2(t *testing.T) {
-	var b Bit
-	b.Set(UP).Toggle(DOWN)
+	var b utils.Bit
+	b.Set(utils.UP).Toggle(utils.DOWN)
 
-	got := b.Has(UP)
+	got := b.Has(utils.UP)
 	if !got {
 		t.Errorf("Setting UP = false, wanted true")
 	}
 
-	got = b.Has(DOWN)
+	got = b.Has(utils.DOWN)
 	if !got {
 		t.Errorf("Toggling DOWN = false, wanted true")
 	}
 
-	got = b.Has(LEFT)
+	got = b.Has(utils.LEFT)
 	if got {
 		t.Errorf("initial LEFT = true, wanted false")
 	}

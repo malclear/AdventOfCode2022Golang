@@ -1,4 +1,4 @@
-package main
+package utils
 
 type Point struct {
 	X int
@@ -14,14 +14,17 @@ func (p *Point) MoveUp(count ...int) {
 	num := valueOrDefault(1, count)
 	p.Y -= num
 }
+
 func (p *Point) MoveDown(count ...int) {
 	num := valueOrDefault(1, count)
 	p.Y += num
 }
+
 func (p *Point) MoveLeft(count ...int) {
 	num := valueOrDefault(1, count)
 	p.X -= num
 }
+
 func (p *Point) MoveRight(count ...int) {
 	num := valueOrDefault(1, count)
 	p.X += num

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -36,302 +35,76 @@ func main() {
 
 func part1(input string) int {
 	parsed := parseInput(input)
-	head := Point{0, 0}
-	tail := Point{0, 0}
-	var tailPositions map[Point]struct{}
-	tailPositions = make(map[Point]struct{})
-	fmt.Println(tailPositions)
-
-	for _, moveset := range parsed {
-		moves := strings.Split(moveset, " ")
-		direction := moves[0]
-		count, _ := strconv.ParseInt(moves[1], 10, 32)
-
-		for i := 0; i < int(count); i++ {
-			previousHead := head
-			switch direction {
-			case "U":
-				head.MoveUp()
-			case "D":
-				head.MoveDown()
-			case "L":
-				head.MoveLeft()
-			default:
-				head.MoveRight()
-			}
-			fmt.Print(head)
-			fmt.Print(" --> ")
-			tail = AdjustNext(tail, head, previousHead)
-			tailPositions[tail] = struct{}{}
-			fmt.Println(tail)
+	register_X := 1
+	cycle := 1
+	pointsOfInterest := map[int]int{}
+	for _, line := range parsed {
+		fmt.Println(line)
+		if line == "noop" {
+			// handle noop
+			incrementCycle(&cycle, &register_X, pointsOfInterest, 0)
+			continue
 		}
-	}
 
-	return len(tailPositions)
+		// handle addx
+		addXValue, err := strconv.Atoi(strings.Split(line, " ")[1])
+		if err != nil {
+			fmt.Printf("Error reading %s\n", line)
+			return -1
+		}
+		incrementCycle(&cycle, &register_X, pointsOfInterest, 0)
+		incrementCycle(&cycle, &register_X, pointsOfInterest, addXValue)
+	}
+	returnValue := 0
+	for cycle, xValue := range pointsOfInterest {
+		returnValue += cycle * xValue
+	}
+	return returnValue
+}
+
+func incrementCycle(cyclePnt *int, x *int, poi map[int]int, toAdd int) {
+	*cyclePnt++
+	*x += toAdd
+	if (*cyclePnt%40)-20 == 0 {
+		poi[*cyclePnt] = *x
+	}
+}
+
+func incrementCycle2(cyclePnt *int, x *int, toAdd int) {
+	pixel := (*cyclePnt - 1) % 40
+	*cyclePnt++
+	if pixel == 0 {
+		fmt.Println()
+	}
+	if *x > pixel-2 && *x < pixel+2 {
+		fmt.Print("#")
+	} else {
+		fmt.Print(".")
+	}
+	*x += toAdd
 }
 
 func part2(input string) int {
 	parsed := parseInput(input)
-	nodes := []Point{
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-		Point{0, 0},
-	}
-
-	var uniqueTailPositions map[Point]struct{}
-	uniqueTailPositions = make(map[Point]struct{})
-
-	//for _, moveset := range parsed {
-	for _, moveset := range parsed {
-
-		direction := strings.Split(moveset, " ")[0]
-		moveCount, _ := strconv.ParseInt(strings.Split(moveset, " ")[1], 10, 32)
-
-		for i := 0; i < int(moveCount); i++ {
-			previousHead := nodes[0]
-			node := nodes[0]
-			switch direction {
-			case "U":
-				node.MoveUp()
-			case "D":
-				node.MoveDown()
-			case "L":
-				node.MoveLeft()
-			default:
-				node.MoveRight()
-			}
-			nodes[0] = node
-			for nodeIdx := 1; nodeIdx < 10; nodeIdx++ {
-				followerPreviousNode := nodes[nodeIdx]
-				nodes[nodeIdx] = AdjustNext(nodes[nodeIdx], nodes[nodeIdx-1], previousHead)
-				previousHead = followerPreviousNode
-
-			}
-			uniqueTailPositions[nodes[9]] = struct{}{}
-
-			//fmt.Print(head)
-			//fmt.Print(" --> ")
-			//tail = AdjustNext(tail, head, previousHead)
+	register_X := 1
+	cycle := 1
+	for _, line := range parsed {
+		//fmt.Println(line)
+		if line == "noop" {
+			// handle noop
+			incrementCycle2(&cycle, &register_X, 0)
+			continue
 		}
 
-		printGraph(nodes, moveset)
-		fmt.Println("")
-	}
-
-	return len(uniqueTailPositions)
-
-}
-
-func printGraph(nodes []Point, moveset string) {
-	fmt.Printf("%s\n", moveset)
-
-	for row := -35; row < 26; row++ {
-		for col := -31; col < 34; col++ {
-			space := "."
-			for n := 0; n < 10; n++ {
-				if nodes[n].X == col && nodes[n].Y == row {
-					space = strconv.Itoa(n)
-					if n == 0 {
-						space = "H"
-					}
-					break
-				}
-			}
-			if row == 0 && col == 0 {
-				space = "s"
-			}
-			fmt.Print(space + " ")
+		// handle addx
+		addXValue, err := strconv.Atoi(strings.Split(line, " ")[1])
+		if err != nil {
+			fmt.Printf("Error reading %s\n", line)
+			return -1
 		}
-
-		fmt.Println()
+		incrementCycle2(&cycle, &register_X, 0)
+		incrementCycle2(&cycle, &register_X, addXValue)
 	}
 	fmt.Println()
-}
-
-func AdjustNext(next Point, leader Point, previousLeaderPos Point) Point {
-	distance := math.Sqrt(float64(((leader.X - next.X) * (leader.X - next.X)) + ((leader.Y - next.Y) * (leader.Y - next.Y))))
-	touching := distance < 2
-	newT := next
-	//if leader.X != next.X && leader.Y != next.Y && !touching {
-	if distance > 2 {
-		if leader.X > newT.X {
-			newT.MoveRight()
-		} else {
-			newT.MoveLeft()
-		}
-		if leader.Y > newT.Y {
-			newT.MoveDown()
-		} else {
-			newT.MoveUp()
-		}
-	} else if distance == 2 {
-		if leader.X > newT.X {
-			newT.MoveRight()
-		}
-		if leader.Y > newT.Y {
-			newT.MoveDown()
-		}
-		if leader.X < newT.X {
-			newT.MoveLeft()
-		}
-		if leader.Y < newT.Y {
-			newT.MoveUp()
-		}
-	} else {
-		if !touching {
-			newT = previousLeaderPos
-		}
-	}
-	return newT
-}
-
-func printUniquePostions(positions map[Point]struct{}) {
-	hightestX := 0
-	lowestX := 0
-	hightestY := 0
-	lowestY := 0
-	for k, _ := range positions {
-		if k.X > hightestX {
-			hightestX = k.X
-		}
-		if k.X < lowestX {
-			lowestX = k.X
-		}
-		if k.Y > hightestY {
-			hightestY = k.Y
-		}
-		if k.Y < lowestY {
-			lowestY = k.Y
-		}
-	}
-
-}
-
-func CheckViewScoreForPoint(point Point, forest Forest, xMax int, yMax int) int {
-	treeHeight := forest.Trees[point].Height
-
-	countDown := 0
-	index := point
-	index.MoveDown()
-	for index.Y < forest.Height {
-		countDown++
-		if forest.Trees[index].Height >= treeHeight {
-			break
-		}
-
-		index.MoveDown()
-	}
-
-	countUp := 0
-	index = point
-	index.MoveUp()
-	for index.Y >= 0 {
-		countUp++
-		if forest.Trees[index].Height >= treeHeight {
-			break
-		}
-
-		index.MoveUp()
-	}
-
-	countRight := 0
-	index = point
-	index.MoveRight()
-	for index.X < forest.Width {
-		countRight++
-		if forest.Trees[index].Height >= treeHeight {
-			break
-		}
-
-		index.MoveRight()
-	}
-
-	countLeft := 0
-	index = point
-	index.MoveLeft()
-	for index.X >= 0 {
-		countLeft++
-		if forest.Trees[index].Height >= treeHeight {
-			break
-		}
-
-		index.MoveLeft()
-	}
-
-	return countUp * countDown * countLeft * countRight
-}
-
-func GetForestWithVisibleTrees(parsed []string) Forest {
-	var forest Forest
-	//forest.Trees = make(map[Point]Tree)
-	forest.Init(len(parsed[0]), len(parsed))
-	for y, line := range parsed {
-		for x := 0; x < len(line); x++ {
-			size := int(line[x]) - 48
-			point := Point{x, y}
-
-			tree := Tree{size, 15}
-			forest.Trees[point] = tree
-		}
-	}
-	var tallest int
-	for y := 0; y < len(parsed); y++ {
-		tallest = 0
-		for x := 0; x < len(parsed[y]); x++ {
-			f := forest.Trees[Point{x, y}]
-			if f.Height > tallest {
-				tallest = forest.Trees[Point{x, y}].Height
-			} else {
-				f.IsVisible = Toggle(f.IsVisible, LEFT)
-			}
-			forest.Trees[Point{x, y}] = f
-		}
-	}
-
-	for y := 0; y < len(parsed); y++ {
-		tallest = 0
-		for x := len(parsed[y]) - 1; x > 0; x-- {
-			f := forest.Trees[Point{x, y}]
-			if f.Height > tallest {
-				tallest = forest.Trees[Point{x, y}].Height
-			} else {
-				f.IsVisible = Toggle(f.IsVisible, RIGHT)
-			}
-			forest.Trees[Point{x, y}] = f
-		}
-	}
-
-	for x := 0; x < len(parsed[0]); x++ {
-		tallest = 0
-		for y := len(parsed) - 1; y > 0; y-- {
-			f := forest.Trees[Point{x, y}]
-			if f.Height > tallest {
-				tallest = forest.Trees[Point{x, y}].Height
-			} else {
-				f.IsVisible = Toggle(f.IsVisible, UP)
-			}
-			forest.Trees[Point{x, y}] = f
-		}
-	}
-	for x := 0; x < len(parsed[0]); x++ {
-		tallest = 0
-		for y := 0; y < len(parsed); y++ {
-			f := forest.Trees[Point{x, y}]
-			if f.Height > tallest {
-				tallest = forest.Trees[Point{x, y}].Height
-			} else {
-				f.IsVisible = Toggle(f.IsVisible, DOWN)
-			}
-			forest.Trees[Point{x, y}] = f
-		}
-	}
-
-	return forest
+	return -1
 }
