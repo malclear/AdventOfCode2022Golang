@@ -5,6 +5,11 @@ type Point struct {
 	Y int
 }
 
+func NewDefaultPoint() Point {
+	p := Point{0, 0}
+	return p
+}
+
 func (p *Point) MoveUp(count ...int) {
 	num := valueOrDefault(1, count)
 	p.Y -= num
