@@ -1,31 +1,56 @@
 package utils
 
-type Stack []string
+type Stack struct {
+	items []interface{}
+}
+
+func (s *Stack) Push(item interface{}) {
+	s.items = append(s.items, item)
+}
+
+func (s *Stack) Pop() interface{} {
+	if len(s.items) == 0 {
+		return nil
+	}
+	item := s.items[len(s.items)-1]
+	s.items = s.items[:len(s.items)-1]
+	return item
+}
+
+func (s *Stack) Peek() interface{} {
+	if len(s.items) == 0 {
+		return nil
+	}
+	return s.items[len(s.items)-1]
+}
+
+func (s *Stack) PeekAll() interface{} {
+	return s.items
+}
+
+func (s *Stack) Contains(item interface{}) bool {
+	for _, thisItem := range s.items {
+		if item == thisItem {
+			return true
+		}
+	}
+	return false
+}
 
 func (s *Stack) IsEmpty() bool {
-	return len(*s) == 0
+	return len(s.items) == 0
 }
 
-func (s *Stack) Push(str string) {
-	*s = append(*s, str) // Simply append the new value to the end of the stack
+func (s *Stack) Size() int {
+	return len(s.items)
 }
 
-func (s *Stack) Pop() (string, bool) {
-	if s.IsEmpty() {
-		return "", false
-	} else {
-		index := len(*s) - 1   // Get the index of the top most element.
-		element := (*s)[index] // Index into the slice and obtain the element.
-		*s = (*s)[:index]      // Remove it from the stack by slicing it off.
-		return element, true
-	}
-}
 func (s *Stack) Reverse() {
 	reversed := Stack{}
-	count := len(*s)
+	count := len(s.items)
 	for i := 0; i < count; i++ {
-		crate, _ := s.Pop()
-		reversed.Push(crate)
+		t := s.Pop()
+		reversed.Push(t)
 	}
 
 	*s = reversed
