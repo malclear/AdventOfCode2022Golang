@@ -30,21 +30,6 @@ func (p *Point) MoveRight(count ...int) {
 	p.X += num
 }
 
-func (p *Point) MoveDirection(direction int) {
-	if direction == int(1) {
-		p.MoveUp(1)
-	}
-	if direction == int(2) {
-		p.MoveRight(1)
-	}
-	if direction == int(4) {
-		p.MoveDown(1)
-	}
-	if direction == int(8) {
-		p.MoveLeft(1)
-	}
-}
-
 func valueOrDefault(def int, count []int) int {
 	if len(count) == 0 {
 		return def

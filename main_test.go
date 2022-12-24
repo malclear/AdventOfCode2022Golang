@@ -131,7 +131,7 @@ func Test_Queue2(t *testing.T) {
 	}
 	item, _ = q.Pop()
 	if item != "second" {
-		t.Error("Second pop didn't work")
+		t.Error("Right pop didn't work")
 	}
 }
 
