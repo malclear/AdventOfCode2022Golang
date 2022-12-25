@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/alexchao26/advent-of-code-go/util"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -18,17 +19,17 @@ func parseInput(input string) (ans []string) {
 
 func main() {
 	var part int
-	flag.IntVar(&part, "part", 1, "part 1 or 2")
+	flag.IntVar(&part, "part", 2, "part 1 or 2")
 	flag.Parse()
 	fmt.Println("Running part", part)
 	fmt.Println("**************************************************************")
 
 	if part == 1 {
-		ans := part1(util.ReadFile("./inputSample.txt"))
+		ans := part1(util.ReadFile("./input.txt"))
 		util.CopyToClipboard(fmt.Sprintf("%v", ans))
 		fmt.Println("Output:", ans)
 	} else {
-		ans := part2(util.ReadFile("./inputSample.txt"))
+		ans := part2(util.ReadFile("./input.txt"))
 		util.CopyToClipboard(fmt.Sprintf("%v", ans))
 		fmt.Println("Output:", ans)
 	}
@@ -36,150 +37,150 @@ func main() {
 
 func part1(input string) int {
 	parsed := parseInput(input)
-
-	orderedPairCount := 0
-	pairs := getPairs(parsed)
-	for _, pair := range pairs {
-		//if pair.Left.Compare(pair.Right) <= 0 {
-		//	orderedPairCount++
-		//}
-		fmt.Println(pair)
-	}
-	return orderedPairCount
-}
-
-func getPairs(parsed []string) map[int]Pair {
-	pairs := make(map[int]Pair)
-
+	indicesTotal := 0
 	for i := 0; i < (len(parsed)+1)/3; i++ {
 		//left := Expression{Encoding: parsed[i*3]}
+		fmt.Println(parsed[i*3])
+		fmt.Println(parsed[i*3+1])
+		left, _, _ := parse(tokenize(parsed[i*3]))
+		right, _, _ := parse(tokenize(parsed[i*3+1]))
 
-		thing := parse(tokenize(parsed[i*3]))
-		fmt.Println(thing)
-
-		//left.Init()
-		//right := Expression{Encoding: parsed[i*3+1]}
-		//right.Init()
-		//pair := Pair{Left: left, Right: right}
-		//pairs[i] = pair
+		if left.Compare(right) <= 0 {
+			indicesTotal += i + 1
+			fmt.Println("Pair", i+1, "is ordered")
+		}
+		fmt.Println()
 	}
-	return pairs
+	return indicesTotal
 }
 
-// At the end of the operation, if the pixel was passed in that operation, then light that pixel.
 func part2(input string) int {
 	parsed := parseInput(input)
-	fmt.Println(parsed)
-	return -1
+	expressions := ExpressionSet{}
+	for _, line := range parsed {
+		if strings.Trim(line, " ") == "" {
+			continue
+		}
+		expression, _, _ := parse(tokenize(line))
+		expressions = append(expressions, expression)
+	}
+
+	alpha, _, _ := parse(tokenize("[[2]]"))
+	beta, _, _ := parse(tokenize("[[6]]"))
+	expressions = append(expressions, alpha)
+	expressions = append(expressions, beta)
+
+	expressions.Swap(len(expressions)-1, len(expressions)-2)
+	var alphaIndex, betaIndex int
+	sort.Sort(expressions)
+	for i, _ := range expressions {
+		if (expressions[i]) == alpha {
+			alphaIndex = i + 1
+		}
+		if (expressions[i]) == beta {
+			betaIndex = i + 1
+		}
+	}
+	return alphaIndex * betaIndex
 }
 
-type Pair struct {
-	Left  Expression
-	Right Expression
+type ExpressionSet []*Expression
+
+func (p ExpressionSet) Less(i, j int) bool {
+	return (p[i]).Compare(p[j]) < 0
+}
+
+func (p ExpressionSet) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+func (p ExpressionSet) Len() int {
+	return len(p)
 }
 
 type Expression struct {
-	Encoding    string
 	Expressions []*Expression
 	Value       *int
 }
-
-//
-//func  NewExpression(encString string) *Expression {
-//	/*
-//		1) Assert the "Encoding" string starts with a "[" or a numeric digit.
-//		2) If "[", find all text before the ending "]" and
-//			create a new Expression instance with the enclosed string.
-//			2a) Call Init on the new instance
-//			2b) add the new instance to the list this instance
-//		3) If the first char is a numeric, split the string on commas and trim the results.
-//			3a) For each integer, create a new expression and assign the value to the "Value" property
-//	*/
-//	retval := Expression{Encoding: encString}
-//	if
-//	var createExpressionSet bool
-//	var createIntegerExpression bool
-//	if strings.HasPrefix(e.Encoding, "[") {
-//		createExpressionSet = true
-//	}
-//
-//}
 
 func tokenize(string string) []string {
 	tokenRegexp := regexp.MustCompile(`\[|\]|[\d]+`)
 	return tokenRegexp.FindAllString(string, -1)
 }
 
-func parse(tokens []string) interface{} {
+func parse(tokens []string) (*Expression, int, error) {
 	// Base case: an empty list of tokens represents an empty list
 	if len(tokens) == 0 {
-		return []interface{}{}
+		return &Expression{}, 0, nil
 	}
 	// If the first token is an opening bracket, we have a list
 	if tokens[0] == "[" {
-		result := []interface{}{}
+		// Get a new instance of Expression and initialize its child list to an empty array
+		result := &(Expression{Expressions: []*Expression{}})
 		// Consume tokens until we reach the closing bracket
 		i := 1
 		for tokens[i] != "]" {
 			// Recursively parse the tokens inside the list
-			result = append(result, parse(tokens[i:]))
+			pt, innerTokenCount, err := parse(tokens[i:])
+			if err != nil {
+				fmt.Println("WHAAAAAT!")
+			}
+			result.Expressions = append(result.Expressions, pt)
 			// Skip over the tokens we just parsed, plus the closing bracket
-			i += len(result[len(result)-1].([]interface{})) + 1
+			i += innerTokenCount
 		}
-		return result
+		// add 1 to i to include the closing bracket
+		return result, i + 1, nil
 	}
 	// If the first token is not an opening bracket, it must be an atom
 	// Try to convert it to an integer
 	if intVal, err := strconv.Atoi(tokens[0]); err == nil {
-		return intVal
+		return &(Expression{Value: &intVal}), 1, nil
 	}
+
+	// If the first token is not an opening bracket, it must be an integer
 	// If it's not an integer, return an error
-	return fmt.Errorf("invalid token: %s", tokens[0])
+	return nil, -1, fmt.Errorf("invalid token: %s", tokens[0])
 }
 
 func (e *Expression) Compare(other *Expression) int {
+	if (e.Value != nil && e.Expressions != nil) || (other.Value != nil && other.Expressions != nil) {
+		panic("Can't have both be non-nil!! ")
+	}
 
-	return 0
+	if e.Value != nil && other.Value != nil {
+		return *(e.Value) - *(other.Value)
+	}
+
+	if e.Expressions != nil && other.Expressions != nil {
+		if len(e.Expressions)+len(other.Expressions) == 0 {
+			return 0
+		}
+		if len(e.Expressions) > 0 && len(other.Expressions) > 0 {
+			i := 0
+			for len(e.Expressions) > i && len(other.Expressions) > i {
+				r := e.Expressions[i].Compare(other.Expressions[i])
+				if r == 0 {
+					i++
+					continue
+				}
+				return r
+			}
+			return len(e.Expressions) - len(other.Expressions)
+		} else {
+			return len(e.Expressions) - len(other.Expressions)
+		}
+	}
+
+	// Elevate the lone integer to be part of a list, as its comparator.
+	left := e
+	if e.Value != nil {
+		left = &(Expression{Expressions: []*Expression{e}})
+	}
+
+	right := other
+	if other.Value != nil {
+		right = &(Expression{Expressions: []*Expression{other}})
+	}
+
+	return left.Compare(right)
 }
-
-func (e *Expression) StartBracketedExpression() *Expression { return nil }
-func (e *Expression) EndBracketedExpression() *Expression   { return nil }
-func (e *Expression) CreateIntegerExpression() *Expression  { return nil }
-
-//func Tokenize(encStr string) []int {
-//	for _, c := range encStr {
-//		fmt.Println(c, string(c))
-//	}
-//	return []int{0}
-//}
-
-const (
-	// "["
-	OPEN_BRACKET int = 91
-	// "]"
-	CLOSED_BRACKET = 93
-	// "0"
-	ZERO = 48
-	// "1"
-	ONE = 49
-	// "2"
-	TWO = 50
-	// "3"
-	THREE = 51
-	// "4"
-	FOUR = 52
-	// "5"
-	FIVE = 53
-	// "6"
-	SIX = 54
-	// "7"
-	SEVEN = 55
-	// "8"
-	EIGHT = 56
-	// "9"
-	NINE = 57
-	// ","
-	COMMA = 44
-	// " "
-	SPACE = 32
-)
